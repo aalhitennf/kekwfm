@@ -1,0 +1,18 @@
+[package]
+name = "kekwfm-egui"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "kekwlib"
+path = "src/lib/lib.rs"
+
+[[bin]]
+name = "kekwfm"
+path = "src/main.rs"
+
+[dependencies]
+directories = "4.0.1"
+eframe = "0.18.0"
+image = "0.24.2"
+notify = "4.0.17"
