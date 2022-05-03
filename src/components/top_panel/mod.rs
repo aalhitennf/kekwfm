@@ -1,4 +1,4 @@
-use eframe::egui::{self, style::Margin, Align, Frame, Layout};
+use eframe::{egui::{self, style::Margin, Align, Frame, Layout, Vec2}, epaint::Color32};
 use kekwlib::dirutils::FileSorting;
 
 use crate::app::KekwFM;
@@ -9,6 +9,7 @@ const MARGIN: f32 = 5.0;
 const PANEL_HEIGHT: f32 = 40.0;
 const BUTTON_WIDTH: f32 = 30.0;
 const BUTTON_HEIGHT: f32 = PANEL_HEIGHT - (MARGIN + MARGIN);
+const ICON_SIZE: Vec2 = Vec2 { x: BUTTON_WIDTH - 8.0, y: BUTTON_HEIGHT - 8.0 };
 
 /// Give amount of items in f32 so theres no need for conversions
 fn calculate_input_margin(items: f32, spacing: f32) -> f32 {
@@ -20,16 +21,13 @@ pub struct TopPanel;
 
 impl TopPanel {
     pub fn build(ctx: &egui::Context, app: &mut KekwFM) {
-        let texture_settings = &ctx.load_texture("icon-gear", app.textures.settings.clone());
-        let texture_arrow_left = &ctx.load_texture("icon-gear", app.textures.arrow_left.clone());
-        let texture_arrow_right = &ctx.load_texture("icon-gear", app.textures.arrow_right.clone());
-        let icon_size = egui::vec2(BUTTON_WIDTH - 8.0, BUTTON_HEIGHT - 8.0);
 
         let frame = Frame {
             inner_margin: Margin::same(MARGIN),
             fill: ctx.style().visuals.window_fill(),
             ..Frame::default()
         };
+
         egui::TopBottomPanel::top("top_panel")
             .resizable(false)
             .max_height(PANEL_HEIGHT)
@@ -40,7 +38,7 @@ impl TopPanel {
                         if ui
                             .add_sized(
                                 [BUTTON_WIDTH, BUTTON_HEIGHT],
-                                egui::ImageButton::new(texture_arrow_left, icon_size).frame(false),
+                                egui::ImageButton::new(app.textures.arrow_left.id(), ICON_SIZE).frame(false),
                             )
                             .clicked()
                         {
@@ -50,7 +48,7 @@ impl TopPanel {
                         if ui
                             .add_sized(
                                 [BUTTON_WIDTH, BUTTON_HEIGHT],
-                                egui::ImageButton::new(texture_arrow_right, icon_size).frame(false),
+                                egui::ImageButton::new(app.textures.arrow_right.id(), ICON_SIZE).frame(false),
                             )
                             .clicked()
                         {
@@ -66,7 +64,7 @@ impl TopPanel {
                         if ui
                             .add_sized(
                                 [BUTTON_WIDTH, BUTTON_HEIGHT],
-                                egui::ImageButton::new(texture_settings, icon_size).frame(false),
+                                egui::ImageButton::new(app.textures.settings.id(), ICON_SIZE).frame(false),
                             )
                             .clicked()
                         {

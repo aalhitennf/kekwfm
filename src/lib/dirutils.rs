@@ -4,6 +4,7 @@ use eframe::egui::{RichText, WidgetText};
 
 use crate::KekwResult;
 
+#[derive(Debug, Clone)]
 pub struct DirectoryListingItem {
     pub filename: String,
     pub path: String,
@@ -73,6 +74,7 @@ pub enum FileSorting {
     None,
 }
 
+#[derive(Debug)]
 pub struct DirectoryListing {
     pub items: Vec<DirectoryListingItem>,
     pub metadata: DirectoryListingMetaData,
@@ -89,6 +91,7 @@ impl Default for DirectoryListing {
     }
 }
 
+#[derive(Debug)]
 pub struct DirectoryListingMetaData {
     files: u64,
     folders: u64,

@@ -1,30 +1,61 @@
-use eframe::{egui, epaint::ColorImage};
+use eframe::{egui, epaint::{ColorImage, TextureHandle}};
 
-#[derive(Default)]
-pub struct Textures {
-    pub settings: ColorImage,
-    pub arrow_left: ColorImage,
-    pub arrow_right: ColorImage,
+#[derive(Clone)]
+pub struct TextureLoader {
+    pub settings: TextureHandle,
+    pub arrow_left: TextureHandle,
+    pub arrow_right: TextureHandle,
+    pub home: TextureHandle,
+    pub folder: TextureHandle,
+    pub file: TextureHandle,
+    pub star: TextureHandle,
 }
 
-impl Textures {
-    pub fn new(theme: &str) -> Self {
+impl TextureLoader {
+    pub fn new(theme: &str, ctx: &egui::Context) -> Self {
         // TODO This can be done better i thnk
         let settings = load_image_from_path(&format!("theme/{theme}/icons/settings.png"))
             .map_or(ColorImage::example(), |image| image);
+        let settings = ctx.load_texture("settings-icon", settings);
+
+
         let arrow_left = load_image_from_path(&format!("theme/{theme}/icons/arrow-left.png"))
             .map_or(ColorImage::example(), |image| image);
+        let arrow_left = ctx.load_texture("arrow_left", arrow_left);
+        
         let arrow_right = load_image_from_path(&format!("theme/{theme}/icons/arrow-right.png"))
             .map_or(ColorImage::example(), |image| image);
-        Textures {
+        let arrow_right = ctx.load_texture("arrow-right", arrow_right);
+    
+        let home = load_image_from_path(&format!("theme/{theme}/icons/home.png"))
+            .map_or(ColorImage::example(), |image| image);
+        let home = ctx.load_texture("home-icon", home);
+
+        let folder = load_image_from_path(&format!("theme/{theme}/icons/folder.png"))
+            .map_or(ColorImage::example(), |image| image);
+        let folder = ctx.load_texture("folder-icon", folder);
+
+        let file = load_image_from_path(&format!("theme/{theme}/icons/file.png"))
+            .map_or(ColorImage::example(), |image| image);
+        let file = ctx.load_texture("file-icon", file);
+        
+        let star = load_image_from_path(&format!("theme/{theme}/icons/star.png"))
+            .map_or(ColorImage::example(), |image| image);
+        let star = ctx.load_texture("star-icon", star);
+
+        TextureLoader {
             settings,
             arrow_left,
             arrow_right,
+            home,
+            folder,
+            file,
+            star,
         }
     }
 }
 
-fn load_image_from_path(path: &str) -> Result<egui::ColorImage, image::ImageError> {
+pub fn load_image_from_path(path: &str) -> Result<egui::ColorImage, image::ImageError> {
     let path = std::path::Path::new(path);
     let image = image::io::Reader::open(path)?.decode()?;
     let size = [image.width() as _, image.height() as _];

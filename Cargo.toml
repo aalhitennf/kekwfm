@@ -14,5 +14,7 @@ path = "src/main.rs"
 [dependencies]
 directories = "4.0.1"
 eframe = "0.18.0"
+egui_extras = "0.18.0"
 image = "0.24.2"
 notify = "4.0.17"
+sysinfo = "0.23.11"

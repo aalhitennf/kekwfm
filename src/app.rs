@@ -1,21 +1,22 @@
-use kekwlib::dirutils::{path_is_dir, read_directory_listing, DirectoryListing, ReadDirOptions};
+use kekwlib::{dirutils::{path_is_dir, read_directory_listing, DirectoryListing, ReadDirOptions}, locations::Locations};
 
 use crate::{
-    components::{self, top_panel::TopPanel},
-    textures::Textures,
+    components::{self, top_panel::TopPanel, list_view::ListView},
+    textures::TextureLoader,
 };
 
-use eframe::egui::{self, WidgetText};
+use eframe::egui;
 
-#[derive(Default)]
+// #[derive(Default)]
 pub struct KekwFM {
     pub current_path: String,
     pub input_value: String,
     pub input_error: Option<String>,
     pub directory_listing: DirectoryListing,
-    pub textures: Textures,
+    pub textures: TextureLoader,
     pub settings_visible: bool,
     pub read_dir_options: ReadDirOptions,
+    pub locations: Locations,
 }
 
 impl KekwFM {
@@ -23,21 +24,40 @@ impl KekwFM {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
         cc.egui_ctx.set_pixels_per_point(1.2);
 
+
+        let textures = TextureLoader::new("feather", &cc.egui_ctx);
+        // let loaded = cc.egui_ctx.tex_manager().read().num_allocated();
+
+        // TODO LOAD TEXTURES HERE AND CHANGE TEXTURES STRUCT TO HOLD ONLY IDS OF THE LOADED THINS
+
         let dirs = directories::UserDirs::new().unwrap();
+
+
         let default_path = dirs.home_dir().to_str().unwrap().to_string();
 
         let read_dir_options = ReadDirOptions::default();
 
+
         let directory_listing = read_directory_listing(&default_path, &read_dir_options)
             .map_or(DirectoryListing::default(), |result| result);
+
+        let start = std::time::Instant::now();
+
+
+        let locations = Locations::default(); // TODO This is slow as fuck
+
+        println!("loaded locations in: {} ms", start.elapsed().as_millis());
+
+
         Self {
             current_path: default_path.clone(),
             input_value: default_path,
             input_error: None,
             directory_listing,
-            textures: Textures::new("feather"),
+            textures,
             settings_visible: false,
             read_dir_options,
+            locations,
         }
     }
 
@@ -108,33 +128,36 @@ impl eframe::App for KekwFM {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         TopPanel::build(ctx, self);
 
-        components::left_panel::build(ctx, self);
+        components::left_panel::build(ctx, self, self.locations.clone());
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            let font_id = egui::TextStyle::Body.resolve(ui.style());
-            let row_height = ui.fonts().row_height(&font_id);
-            let num_rows = self.directory_listing.items.len();
+            // TODO This clone is bad but it'll do for now
 
-            egui::ScrollArea::vertical()
-                .auto_shrink([false, true])
-                .show_rows(ui, row_height, num_rows, |ui, row_range| {
-                    for row in row_range {
-                        let item = self.directory_listing.items.get(row);
+            // let items = self.directory_listing.items.clone();
 
-                        if let Some(item) = item {
-                            if ui
-                                .add(
-                                    egui::Label::new(WidgetText::from(item))
-                                        .sense(egui::Sense::click()),
-                                )
-                                .double_clicked()
-                            {
-                                let p = item.path.clone();
-                                self.try_navigate(Some(p));
-                            };
-                        }
-                    }
-                });
+
+            ListView::build(ui, self, self.directory_listing.items.clone());
         });
     }
 }
+
+// egui::ScrollArea::vertical()
+//     .auto_shrink([false, true])
+//     .show_rows(ui, row_height, num_rows, |ui, row_range| {
+//         for row in row_range {
+//             let item = self.directory_listing.items.get(row);
+
+//             if let Some(item) = item {
+//                 if ui
+//                     .add(
+//                         egui::Label::new(WidgetText::from(item))
+//                             .sense(egui::Sense::click()),
+//                     )
+//                     .double_clicked()
+//                 {
+//                     let p = item.path.clone();
+//                     self.try_navigate(Some(p));
+//                 };
+//             }
+//         }
+//     });
