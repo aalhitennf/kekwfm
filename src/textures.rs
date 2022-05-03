@@ -1,4 +1,7 @@
-use eframe::{egui, epaint::{ColorImage, TextureHandle}};
+use eframe::{
+    egui,
+    epaint::{ColorImage, TextureHandle},
+};
 
 #[derive(Clone)]
 pub struct TextureLoader {
@@ -19,15 +22,14 @@ impl TextureLoader {
             .map_or(ColorImage::example(), |image| image);
         let settings = ctx.load_texture("settings-icon", settings);
 
-
         let arrow_left = load_image_from_path(&format!("theme/{theme}/icons/arrow-left.png"))
             .map_or(ColorImage::example(), |image| image);
         let arrow_left = ctx.load_texture("arrow_left", arrow_left);
-        
+
         let arrow_right = load_image_from_path(&format!("theme/{theme}/icons/arrow-right.png"))
             .map_or(ColorImage::example(), |image| image);
         let arrow_right = ctx.load_texture("arrow-right", arrow_right);
-    
+
         let home = load_image_from_path(&format!("theme/{theme}/icons/home.png"))
             .map_or(ColorImage::example(), |image| image);
         let home = ctx.load_texture("home-icon", home);
@@ -39,7 +41,7 @@ impl TextureLoader {
         let file = load_image_from_path(&format!("theme/{theme}/icons/file.png"))
             .map_or(ColorImage::example(), |image| image);
         let file = ctx.load_texture("file-icon", file);
-        
+
         let star = load_image_from_path(&format!("theme/{theme}/icons/star.png"))
             .map_or(ColorImage::example(), |image| image);
         let star = ctx.load_texture("star-icon", star);

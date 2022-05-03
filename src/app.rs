@@ -1,24 +1,34 @@
-use kekwlib::{dirutils::{path_is_dir, read_directory_listing, DirectoryListing, ReadDirOptions}, locations::Locations, observer::FsObserver};
+use std::path::Path;
+
+use crossbeam_channel::Receiver;
+use directories::UserDirs;
+use kekwlib::{
+    dirutils::{read_directory_listing, DirectoryListing, ReadDirOptions},
+    fileutils,
+    observer::FsObserver,
+};
 
 use crate::{
-    components::{self, top_panel::TopPanel, list_view::ListView},
+    components::{ListView, LeftPanel, TopPanel},
+    eevertti::{set_eevertti, KekEvent},
     textures::TextureLoader,
 };
 
-use eframe::{egui, App};
+use eframe::egui;
 
-// #[derive(Default)]
 pub struct KekwFM {
-    pub current_path: String,
-    pub input_value: String,
+    pub dirs: UserDirs,
+    // pub current_path: String,
     pub input_error: Option<String>,
     pub directory_listing: DirectoryListing,
     pub textures: TextureLoader,
-    pub settings_visible: bool,
+    // UI elements
+    pub left_panel: LeftPanel,
+    pub top_panel: TopPanel,
+    pub list_view: ListView,
     pub read_dir_options: ReadDirOptions,
-    pub locations: Locations,
     pub observer: FsObserver,
-    // pub is_exiting: bool,
+    pub event_receiver: Receiver<KekEvent>,
 }
 
 impl KekwFM {
@@ -26,144 +36,115 @@ impl KekwFM {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
         cc.egui_ctx.set_pixels_per_point(1.2);
 
-
         let textures = TextureLoader::new("feather", &cc.egui_ctx);
-        // let loaded = cc.egui_ctx.tex_manager().read().num_allocated();
-
-        // TODO LOAD TEXTURES HERE AND CHANGE TEXTURES STRUCT TO HOLD ONLY IDS OF THE LOADED THINS
 
         let dirs = directories::UserDirs::new().unwrap();
-
 
         let default_path = dirs.home_dir().to_str().unwrap().to_string();
 
         let read_dir_options = ReadDirOptions::default();
 
-
         let directory_listing = read_directory_listing(&default_path, &read_dir_options)
             .map_or(DirectoryListing::default(), |result| result);
 
-        let start = std::time::Instant::now();
-
-
-        let locations = Locations::default(); // TODO This is slow as fuck
-
-        println!("loaded locations in: {} ms", start.elapsed().as_millis());
-        println!("{}", locations.devices.len());
-
         let observer = FsObserver::new(&default_path, cc.egui_ctx.clone());
 
+        let (tx, rx) = crossbeam_channel::unbounded();
+
+        set_eevertti(tx);
+
+        // UI Elements
+        let left_panel = LeftPanel::default();
+        let top_panel = TopPanel::new(&default_path);
+        let list_view = ListView::default();
 
         Self {
-            current_path: default_path.clone(),
-            input_value: default_path,
+            dirs,
+            // current_path: default_path.clone(),
+            // input_value: default_path,
             input_error: None,
             directory_listing,
             textures,
-            settings_visible: false,
+            left_panel,
+            top_panel,
+            list_view,
+            // settings_visible: false,
             read_dir_options,
-            locations,
+            // locations,
             observer,
-
+            event_receiver: rx,
             // is_exiting: false,
         }
     }
 
     // Take optional path as argument, if none passed, try navigate to input value
-    pub fn try_navigate(&mut self, path: Option<String>) {
-        let path = if let Some(p) = path {
-            p
-        } else {
-            self.input_value.clone()
-        };
-
-        if !path_is_dir(&path) {
-            self.input_error = Some(format!("Path is not directory: {}", path));
+    fn try_navigate<P: AsRef<Path> + ToString + Copy>(&mut self, path: P) {
+        if !path.as_ref().is_dir() {
             return;
         }
 
-        self.refresh_dir_listing(&path);
-        self.observer.change_path(&path);
-        self.current_path = path.to_string();
-        self.input_value = path.to_string();
+        self.refresh_dir_listing(path);
+        self.observer.change_path(path);
+        // self.current_path = path.to_string();
+        self.top_panel.input_value = path.to_string();
     }
 
-    pub fn try_navigate_parent(&mut self) {
+    fn try_navigate_parent(&mut self) {
         if let Some(parent) = &self.directory_listing.parent {
             let p = parent.clone();
-            self.try_navigate(Some(p));
+            self.try_navigate(&p);
         }
     }
 
-    pub fn try_navigate_forward(&self) {
-        println!("Unimplementd");
-    }
-
-    pub fn refresh_dir_listing(&mut self, path: &str) {
+    fn refresh_dir_listing<P: AsRef<Path> + Copy>(&mut self, path: P) {
         match read_directory_listing(path, &self.read_dir_options) {
             Ok(result) => {
                 self.directory_listing = result;
             }
             Err(e) => {
-                println!("{}", e.to_string());
+                println!("{}", e);
                 self.input_error = Some(e.to_string());
             }
         }
     }
 
-    pub fn refresh_current_dir_listing(&mut self) {
-        match read_directory_listing(&self.current_path, &self.read_dir_options) {
+    fn refresh_current_dir_listing(&mut self) {
+        match read_directory_listing(&self.observer.path, &self.read_dir_options) {
             Ok(result) => {
                 self.directory_listing = result;
             }
             Err(e) => {
-                println!("{}", e.to_string());
+                println!("{}", e);
                 self.input_error = Some(e.to_string());
             }
         }
-    }
-
-    pub fn unimplemented(&self) {
-        println!("Unimplementd");
     }
 }
 
 impl eframe::App for KekwFM {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-
         if self.observer.receiver.try_recv().is_ok() {
-            println!("Received and refreshign");
             self.refresh_current_dir_listing();
         }
 
-        TopPanel::build(ctx, self);
+        if let Ok(event) = self.event_receiver.try_recv() {
+            match event {
+                KekEvent::Print(text) => println!("Eeventti: {}", text),
+                KekEvent::Navigate(path) => self.try_navigate(&path),
+                KekEvent::NavigateParent => self.try_navigate_parent(),
+                KekEvent::RefreshDirList => self.refresh_current_dir_listing(),
+                KekEvent::XdgOpenFile(path) => fileutils::xdg_open_file(&path),
+                _ => println!("Unimplemented event"),
+            }
+        }
 
-        components::left_panel::build(ctx, self, self.locations.clone());
+        self.top_panel
+            .show(ctx, &self.textures, &mut self.read_dir_options);
+
+        self.left_panel.show(ctx, &self.textures);
 
         egui::CentralPanel::default().show(ctx, |ui| {
-
-            ListView::build(ui, self, self.directory_listing.items.clone());
+            self.list_view.show(ui, &self.directory_listing.items, &self.textures, &mut self.read_dir_options);
         });
     }
 }
-
-// egui::ScrollArea::vertical()
-//     .auto_shrink([false, true])
-//     .show_rows(ui, row_height, num_rows, |ui, row_range| {
-//         for row in row_range {
-//             let item = self.directory_listing.items.get(row);
-
-//             if let Some(item) = item {
-//                 if ui
-//                     .add(
-//                         egui::Label::new(WidgetText::from(item))
-//                             .sense(egui::Sense::click()),
-//                     )
-//                     .double_clicked()
-//                 {
-//                     let p = item.path.clone();
-//                     self.try_navigate(Some(p));
-//                 };
-//             }
-//         }
-//     });

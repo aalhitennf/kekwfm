@@ -2,6 +2,7 @@
 
 mod app;
 pub mod components;
+pub mod eevertti;
 pub mod textures;
 
 use app::KekwFM;

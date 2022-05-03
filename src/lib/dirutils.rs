@@ -35,16 +35,16 @@ impl TryFrom<DirEntry> for DirectoryListingItem {
         let filename = entry
             .file_name()
             .to_str()
-            .map_or("default".into(), |f| f.to_string());
+            .map_or("Unknown".into(), ToString::to_string);
         let path = entry
             .path()
             .to_str()
-            .map_or("default".into(), |p| p.to_string());
+            .map_or("Unknown".into(), ToString::to_string);
         let extension = if entry.path().is_dir() {
             "dir".into()
         } else {
             entry.path().extension().map_or("none".to_string(), |s| {
-                s.to_str().map_or("error".into(), |d| d.to_string())
+                s.to_str().map_or("error".into(), ToString::to_string)
             })
         };
 
@@ -74,22 +74,22 @@ pub enum FileSorting {
     None,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DirectoryListing {
     pub items: Vec<DirectoryListingItem>,
     pub metadata: DirectoryListingMetaData,
     pub parent: Option<String>,
 }
 
-impl Default for DirectoryListing {
-    fn default() -> Self {
-        DirectoryListing {
-            items: vec![],
-            metadata: DirectoryListingMetaData::default(),
-            parent: None,
-        }
-    }
-}
+// impl Default for DirectoryListing {
+//     fn default() -> Self {
+//         DirectoryListing {
+//             items: vec![],
+//             metadata: DirectoryListingMetaData::default(),
+//             parent: None,
+//         }
+//     }
+// }
 
 #[derive(Debug)]
 pub struct DirectoryListingMetaData {
@@ -131,14 +131,14 @@ impl Default for ReadDirOptions {
     }
 }
 
-pub fn read_directory_listing(
-    path: &str,
+pub fn read_directory_listing<P: AsRef<Path> + Copy>(
+    path: P,
     options: &ReadDirOptions,
 ) -> KekwResult<DirectoryListing> {
-    let path = Path::new(&path);
+    // let path = Path::new(&path);
 
-    if path.is_dir() {
-        let mut items = read_directory_listing_items(&path, options.include_hidden)?;
+    if path.as_ref().is_dir() {
+        let mut items = read_directory_listing_items(path, options.include_hidden)?;
 
         match options.sorting {
             FileSorting::Alphabetical => items.sort_by_key(|k| k.filename.clone()),
@@ -156,9 +156,11 @@ pub fn read_directory_listing(
         }
 
         let metadata = extract_directory_metadata(&items);
+
         let parent = path
+            .as_ref()
             .parent()
-            .map_or(None, |p| Some(p.to_str().unwrap().to_string()));
+            .map(|p| p.to_str().unwrap().to_string());
 
         Ok(DirectoryListing {
             items,
@@ -170,8 +172,8 @@ pub fn read_directory_listing(
     }
 }
 
-fn read_directory_listing_items(
-    path: &Path,
+fn read_directory_listing_items<P: AsRef<Path>>(
+    path: P,
     include_hidden: bool,
 ) -> Result<Vec<DirectoryListingItem>, String> {
     let read_dir = std::fs::read_dir(path).map_err(stringify_io_error)?;
@@ -192,7 +194,7 @@ fn read_directory_listing_items(
     Ok(items)
 }
 
-fn extract_directory_metadata(list: &Vec<DirectoryListingItem>) -> DirectoryListingMetaData {
+fn extract_directory_metadata(list: &[DirectoryListingItem]) -> DirectoryListingMetaData {
     let metadata = list
         .iter()
         .fold(DirectoryListingMetaData::default(), |mut a, b| {
@@ -210,10 +212,6 @@ fn extract_directory_metadata(list: &Vec<DirectoryListingItem>) -> DirectoryList
             a
         });
     metadata
-}
-
-pub fn path_is_dir<P: AsRef<Path>>(path: &P) -> bool {
-    Path::new(path.as_ref()).is_dir()
 }
 
 pub fn read_dir_entries<P: AsRef<Path>>(path: &P) -> KekwResult<Vec<DirEntry>> {

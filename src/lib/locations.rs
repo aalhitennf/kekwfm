@@ -10,13 +10,10 @@ pub struct Location {
 
 impl Location {
     pub fn new(path: &str, text: &str, icon: &str) -> Self {
-        let path = path.to_string();
-        let text = text.to_string();
-        let icon = icon.to_string();
         Location {
-            path,
-            text,
-            icon,
+            path: path.to_string(),
+            text: text.to_string(),
+            icon: icon.to_string(),
             hidden: false,
         }
     }
@@ -55,17 +52,23 @@ impl From<&DiskInfo> for Device {
         } else {
             String::from("hard-drive")
         };
-        Device { icon, hidden: false, info: disk.to_owned() }
+        Device {
+            icon,
+            hidden: false,
+            info: disk.clone(),
+        }
     }
 }
 
-
 impl Default for Locations {
     fn default() -> Self {
-        let user_dirs = directories::UserDirs::new().unwrap();
-        let home = Location::new(user_dirs.home_dir().to_str().unwrap(), "Home", "home");
-        let fav = Location::new("/usr/lib", "Usr lib", "palli");
-        let devices = crate::diskinfo::disks().iter().map(Device::from).collect::<Vec<Device>>();
+        let dirs = directories::UserDirs::new().unwrap();
+        let home = Location::new(dirs.home_dir().to_str().unwrap(), "Home", "home");
+        let fav = Location::new("/usr/lib", "/usr/lib", "koira");
+        let devices = crate::diskinfo::disks()
+            .iter()
+            .map(Device::from)
+            .collect::<Vec<Device>>();
 
         Locations {
             home,
@@ -74,3 +77,20 @@ impl Default for Locations {
         }
     }
 }
+
+// impl Default for Locations<'_> {
+//     fn default() -> Self {
+//         let user_dirs = directories::UserDirs::new().unwrap();
+//         let home_path = user_dirs.home_dir().clone();
+//         let home_str = home_path.to_str().unwrap();
+//         let home = Location::new(home_str, "Home", "home");
+//         let fav = Location::new("/usr/lib", "Usr lib", "palli");
+//         let devices = crate::diskinfo::disks().iter().map(Device::from).collect::<Vec<Device>>();
+
+//         Locations {
+//             home,
+//             favourites: vec![fav],
+//             devices,
+//         }
+//     }
+// }

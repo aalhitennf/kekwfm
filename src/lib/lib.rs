@@ -1,5 +1,6 @@
 pub mod dirutils;
 pub mod diskinfo;
+pub mod fileutils;
 pub mod locations;
 pub mod observer;
 
