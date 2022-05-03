@@ -22,7 +22,7 @@ impl Location {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Device {
     pub icon: String,
     pub hidden: bool,
@@ -34,7 +34,7 @@ pub struct Locations {
     pub home: Location,
     // pub downloads: Location,
     pub favourites: Vec<Location>,
-    // pub devices: Vec<Device>,
+    pub devices: Vec<Device>,
 }
 
 // impl From<DiskInfo> for Device {
@@ -65,12 +65,12 @@ impl Default for Locations {
         let user_dirs = directories::UserDirs::new().unwrap();
         let home = Location::new(user_dirs.home_dir().to_str().unwrap(), "Home", "home");
         let fav = Location::new("/usr/lib", "Usr lib", "palli");
-        // let devices = crate::diskinfo::disks().iter().map(Device::from).collect::<Vec<Device>>();
+        let devices = crate::diskinfo::disks().iter().map(Device::from).collect::<Vec<Device>>();
 
         Locations {
             home,
             favourites: vec![fav],
-            // devices,
+            devices,
         }
     }
 }

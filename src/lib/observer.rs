@@ -1,31 +1,61 @@
 use std::{
     path::Path,
-    sync::mpsc::{channel, Sender},
+    sync::Mutex,
+    sync::mpsc::{channel, Sender, Receiver},
     thread::{self, JoinHandle},
     time::Duration,
 };
 
+
+use eframe::egui::Context;
 use notify::{
     watcher, DebouncedEvent, Error as NotifyError, RecommendedWatcher, RecursiveMode, Watcher,
 };
-// use tauri::Window;
+use crossbeam_channel::{Sender as CbSender, Receiver as CbReceiver, unbounded};
+use once_cell::sync::OnceCell;
 
-// use crate::KekwState;
+#[derive(Debug)]
+pub struct Pappa(String);
+
+
+// pub static KEKW: OnceCell<Mutex<Pappa>> = OnceCell::new();
+
+// impl Pappa {
+//     // pub fn global() -> &'static Pappa {
+//     //     &KEKW.get().unwrap().lock().unwrap()
+//     // }
+//     pub fn set_value(&mut self, val: &str) {
+//         self.0 = String::from(val);
+//     }
+//     pub fn get_value(&self) -> &str {
+//         &self.0
+//     }
+// }
+
 
 pub struct FsObserver {
-    sender: Sender<DebouncedEvent>,
+    // sender: Sender<DebouncedEvent>,
+    pub receiver: CbReceiver<DebouncedEvent>,
     watcher: RecommendedWatcher,
     handle: JoinHandle<()>,
     path: String,
 }
 
 impl FsObserver {
-    pub fn new(path: &str) -> Self {
-        let (tx, handle) = spawn_observer_thread();
+    pub fn new(path: &str, ctx: Context) -> Self {
+
+        let (tx, rx) = std::sync::mpsc::channel();
+
+        let (handle, receiver) = spawn_observer_thread(rx, ctx);
+
+        let mut watcher = watcher(tx.clone(), Duration::from_millis(100)).unwrap();
+
+        watcher.watch(path, RecursiveMode::NonRecursive).unwrap();
 
         FsObserver {
-            sender: tx.clone(),
-            watcher: watcher(tx, Duration::from_millis(100)).unwrap(),
+            // sender: tx,
+            receiver,
+            watcher,
             handle,
             path: path.to_string(),
         }
@@ -76,19 +106,16 @@ impl FsObserver {
     }
 }
 
-impl Drop for Observer {
-    fn drop(&mut self) {
-        if let Some(o) = self.inner.take() {
-            o.sender
-                .send(DebouncedEvent::Error(
-                    NotifyError::Generic(String::from("TERMINATE_OBSERVER")),
-                    None,
-                ))
-                .unwrap();
-            o.handle.join().unwrap();
-        }
-    }
-}
+// impl Drop for FsObserver {
+//     fn drop(&mut self) {
+//         // if let Some(o) = self.inner.take() {
+//         self.sender
+//             .send(ObserverEvent::Terminate)
+//             .unwrap();
+//         self.handle.join().unwrap();
+//         // }
+//     }
+// }
 
 // #[derive(Serialize)]
 // struct ObserverEvent {
@@ -124,44 +151,25 @@ impl Drop for Observer {
 // Creates channel and spawns a thread. Give channel reveiver to the thread and
 // return sender with thread handle
 
-// TODO ÄLÄ KÄYTÄ TÄTÄ, LPUTON LOOP
-fn spawn_observer_thread() -> (Sender<DebouncedEvent>, JoinHandle<()>) {
-    let (tx, rx) = channel();
+// pub enum ObserverEvent {
+//     FsEvent(DebouncedEvent),
+//     Terminate,
+// }
 
-    let tx_c = tx.clone();
+fn spawn_observer_thread(
+    rx: Receiver<DebouncedEvent>,
+    ctx: Context,
+) -> (JoinHandle<()>, CbReceiver<DebouncedEvent>) {
+    let (cbtx, cbrx) = crossbeam_channel::unbounded();
     let handle = thread::spawn(move || {
         loop {
             if let Ok(event) = rx.recv() {
-                match event {
-                    // "Custom error" with message "TERMINATE_OBSERVER" to kill the thread gracefully
-                    // Hacky but it works and proud of it
-                    DebouncedEvent::Error(NotifyError::Generic(message), None) => {
-                        if message == "TERMINATE_OBSERVER" {
-                            println!("TERMINATE RECEIVED ({:?})", thread::current().id());
-                            break;
-                        } else {
-                            // println!("Error::NotifyError: {}", message);
-                            if let Err(e) = tx_c
-                                .send(DebouncedEvent::Error(NotifyError::Generic(message), None))
-                            {
-                                println!("Failed to send message to watcher")
-                            }
-                        }
-                    }
-                    _ => {
-                        // handle_observer_event(event);
-                        // let e = format!("{:?}", event);
-                        // window.emit("observer_event", e).unwrap();
-                        tx_c.send(event);
-                    }
-                }
+                cbtx.send(event).unwrap();
+                ctx.request_repaint();
+
             }
         }
     });
 
-    (tx, handle)
-}
-
-pub struct Observer {
-    pub inner: Option<FsObserver>,
+    (handle, cbrx)
 }

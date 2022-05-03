@@ -1,4 +1,4 @@
-use eframe::{egui::{self, Button, Frame, Layout, Sense, Ui, Response, style::Margin}, emath::{Align, Vec2}, epaint::TextureId};
+use eframe::{egui::{self, Button, Frame, Sense, Ui, Response, style::Margin}, emath::Vec2, epaint::TextureId};
 use kekwlib::locations::Locations;
 
 use crate::app::KekwFM;
@@ -56,8 +56,10 @@ pub fn build(ctx: &egui::Context, app: &mut KekwFM, locations: Locations) {
             ui.label("Devices");
             ui.add_space(LIST_SPACING_LABEL);
 
-            if create_location_item(ui, "Placeholder", app.textures.home.id()).clicked() {
-                app.try_navigate(Some(app.locations.home.path.clone()));
+            for dev in locations.devices {
+                if create_location_item(ui, &dev.info.device_name, app.textures.hard_drive.id()).clicked() {
+                    app.try_navigate(Some(dev.info.mount_point.clone()));
+                }
             }
         });
 }

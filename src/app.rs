@@ -1,11 +1,11 @@
-use kekwlib::{dirutils::{path_is_dir, read_directory_listing, DirectoryListing, ReadDirOptions}, locations::Locations};
+use kekwlib::{dirutils::{path_is_dir, read_directory_listing, DirectoryListing, ReadDirOptions}, locations::Locations, observer::FsObserver};
 
 use crate::{
     components::{self, top_panel::TopPanel, list_view::ListView},
     textures::TextureLoader,
 };
 
-use eframe::egui;
+use eframe::{egui, App};
 
 // #[derive(Default)]
 pub struct KekwFM {
@@ -17,6 +17,8 @@ pub struct KekwFM {
     pub settings_visible: bool,
     pub read_dir_options: ReadDirOptions,
     pub locations: Locations,
+    pub observer: FsObserver,
+    // pub is_exiting: bool,
 }
 
 impl KekwFM {
@@ -47,6 +49,9 @@ impl KekwFM {
         let locations = Locations::default(); // TODO This is slow as fuck
 
         println!("loaded locations in: {} ms", start.elapsed().as_millis());
+        println!("{}", locations.devices.len());
+
+        let observer = FsObserver::new(&default_path, cc.egui_ctx.clone());
 
 
         Self {
@@ -58,6 +63,9 @@ impl KekwFM {
             settings_visible: false,
             read_dir_options,
             locations,
+            observer,
+
+            // is_exiting: false,
         }
     }
 
@@ -68,11 +76,6 @@ impl KekwFM {
         } else {
             self.input_value.clone()
         };
-        let path = if path.len() > 1 {
-            path.trim_end_matches('/').to_string()
-        } else {
-            path
-        };
 
         if !path_is_dir(&path) {
             self.input_error = Some(format!("Path is not directory: {}", path));
@@ -80,6 +83,7 @@ impl KekwFM {
         }
 
         self.refresh_dir_listing(&path);
+        self.observer.change_path(&path);
         self.current_path = path.to_string();
         self.input_value = path.to_string();
     }
@@ -126,15 +130,17 @@ impl KekwFM {
 
 impl eframe::App for KekwFM {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+
+        if self.observer.receiver.try_recv().is_ok() {
+            println!("Received and refreshign");
+            self.refresh_current_dir_listing();
+        }
+
         TopPanel::build(ctx, self);
 
         components::left_panel::build(ctx, self, self.locations.clone());
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            // TODO This clone is bad but it'll do for now
-
-            // let items = self.directory_listing.items.clone();
-
 
             ListView::build(ui, self, self.directory_listing.items.clone());
         });

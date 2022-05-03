@@ -12,9 +12,11 @@ name = "kekwfm"
 path = "src/main.rs"
 
 [dependencies]
+crossbeam-channel = "0.5.4"
 directories = "4.0.1"
 eframe = "0.18.0"
 egui_extras = "0.18.0"
 image = "0.24.2"
 notify = "4.0.17"
+once_cell = "1.10.0"
 sysinfo = "0.23.11"

@@ -975,11 +975,13 @@ dependencies = [
 name = "kekwfm-egui"
 version = "0.1.0"
 dependencies = [
+ "crossbeam-channel",
  "directories",
  "eframe",
  "egui_extras",
  "image",
  "notify",
+ "once_cell",
  "sysinfo",
 ]
 

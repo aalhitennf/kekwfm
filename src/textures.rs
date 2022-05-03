@@ -9,6 +9,7 @@ pub struct TextureLoader {
     pub folder: TextureHandle,
     pub file: TextureHandle,
     pub star: TextureHandle,
+    pub hard_drive: TextureHandle,
 }
 
 impl TextureLoader {
@@ -43,6 +44,10 @@ impl TextureLoader {
             .map_or(ColorImage::example(), |image| image);
         let star = ctx.load_texture("star-icon", star);
 
+        let hard_drive = load_image_from_path(&format!("theme/{theme}/icons/hard-drive.png"))
+            .map_or(ColorImage::example(), |image| image);
+        let hard_drive = ctx.load_texture("hard-drive-icon", hard_drive);
+
         TextureLoader {
             settings,
             arrow_left,
@@ -51,6 +56,7 @@ impl TextureLoader {
             folder,
             file,
             star,
+            hard_drive,
         }
     }
 }

@@ -33,7 +33,10 @@ impl From<&Disk> for DiskInfo {
     }
 }
 
+// TODO Muuta tämä suoraan joksikin
 pub fn disks() -> Vec<DiskInfo> {
     use sysinfo::SystemExt;
-    sysinfo::System::new_all().disks().into_iter().map(DiskInfo::from).collect::<Vec<DiskInfo>>()
+    let mut info = sysinfo::System::new();
+    info.refresh_disks_list();
+    info.disks().into_iter().map(DiskInfo::from).collect::<Vec<DiskInfo>>()
 }
