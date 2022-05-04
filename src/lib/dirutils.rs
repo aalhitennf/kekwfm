@@ -1,7 +1,5 @@
 use std::{fs::DirEntry, path::Path, result::Result};
 
-use eframe::egui::{RichText, WidgetText};
-
 use crate::KekwResult;
 
 #[derive(Debug, Clone)]
@@ -13,20 +11,7 @@ pub struct DirectoryListingItem {
     pub is_file: bool,
     pub is_dir: bool,
     pub is_symlink: bool,
-}
-
-impl From<&DirectoryListingItem> for WidgetText {
-    fn from(item: &DirectoryListingItem) -> Self {
-        let text = format!(
-            "{} - {} - {} bytes",
-            item.filename, item.extension, item.size_bytes
-        );
-        WidgetText::RichText(RichText::from(text))
-    }
-    // fn from() -> WidgetText {
-    //     let text = format!("{} - {} - {} bytes", self.filename, self.extension, self.size_bytes);
-    //     WidgetText::RichText(RichText::from(text))
-    // }
+    pub selected: bool,
 }
 
 impl TryFrom<DirEntry> for DirectoryListingItem {
@@ -58,6 +43,7 @@ impl TryFrom<DirEntry> for DirectoryListingItem {
             is_file: metadata.is_file(),
             is_dir: metadata.is_dir(),
             is_symlink: metadata.is_symlink(),
+            selected: false,
         })
     }
 }

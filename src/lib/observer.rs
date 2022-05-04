@@ -40,21 +40,23 @@ impl FsObserver {
     pub fn change_path<P: AsRef<Path> + ToString>(&mut self, path: P) {
         if let Err(e) = self.watcher.unwatch(&self.path) {
             println!("{e:?}");
-        } else {
-            println!("Observer unwached: {}", self.path);
         }
+        // } else {
+        //     println!("Observer unwached: {}", self.path);
+        // }
 
         // Even if unwatch errored, we can continue normally
 
         self.path = path.to_string();
-        println!("Current path: {}", self.path);
+        // println!("Current path: {}", self.path);
 
         if let Err(e) = self.watcher.watch(&self.path, RecursiveMode::NonRecursive) {
             println!("Failed to watch path {}", self.path);
             println!("{e:?}");
-        } else {
-            println!("Observing path: {}", self.path);
         }
+        // } else {
+        //     println!("Observing path: {}", self.path);
+        // }
     }
 }
 

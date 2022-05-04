@@ -5,12 +5,14 @@ use directories::UserDirs;
 use kekwlib::{
     dirutils::{read_directory_listing, DirectoryListing, ReadDirOptions},
     fileutils,
+    history::History,
     observer::FsObserver,
 };
 
 use crate::{
-    components::{ListView, LeftPanel, TopPanel},
-    eevertti::{set_eevertti, KekEvent},
+    components::{LeftPanel, ListView, TopPanel},
+    eevertti::{set_eevertti, KekEvent, MouseButton},
+    rdev_events,
     textures::TextureLoader,
 };
 
@@ -18,7 +20,7 @@ use eframe::egui;
 
 pub struct KekwFM {
     pub dirs: UserDirs,
-    // pub current_path: String,
+    history: History,
     pub input_error: Option<String>,
     pub directory_listing: DirectoryListing,
     pub textures: TextureLoader,
@@ -42,6 +44,8 @@ impl KekwFM {
 
         let default_path = dirs.home_dir().to_str().unwrap().to_string();
 
+        let history = History::new(&default_path);
+
         let read_dir_options = ReadDirOptions::default();
 
         let directory_listing = read_directory_listing(&default_path, &read_dir_options)
@@ -53,27 +57,26 @@ impl KekwFM {
 
         set_eevertti(tx);
 
+        // Spawn mouse button listener
+        rdev_events::spawn_mouse_event_listener(cc.egui_ctx.clone());
+
         // UI Elements
-        let left_panel = LeftPanel::default();
+        let left_panel = LeftPanel::new();
         let top_panel = TopPanel::new(&default_path);
         let list_view = ListView::default();
 
         Self {
             dirs,
-            // current_path: default_path.clone(),
-            // input_value: default_path,
+            history,
             input_error: None,
             directory_listing,
             textures,
             left_panel,
             top_panel,
             list_view,
-            // settings_visible: false,
             read_dir_options,
-            // locations,
             observer,
             event_receiver: rx,
-            // is_exiting: false,
         }
     }
 
@@ -83,10 +86,14 @@ impl KekwFM {
             return;
         }
 
+        if path.to_string() == self.observer.path {
+            return;
+        }
+
         self.refresh_dir_listing(path);
         self.observer.change_path(path);
-        // self.current_path = path.to_string();
         self.top_panel.input_value = path.to_string();
+        self.history.add(&path.to_string());
     }
 
     fn try_navigate_parent(&mut self) {
@@ -96,10 +103,24 @@ impl KekwFM {
         }
     }
 
+    fn try_navigate_back(&mut self) {
+        if let Some(previous) = self.history.get_previous() {
+            self.try_navigate(&previous);
+        }
+    }
+
+    fn try_navigate_forward(&mut self) {
+        if let Some(next) = self.history.get_next() {
+            self.try_navigate(&next);
+        }
+    }
+
     fn refresh_dir_listing<P: AsRef<Path> + Copy>(&mut self, path: P) {
         match read_directory_listing(path, &self.read_dir_options) {
             Ok(result) => {
                 self.directory_listing = result;
+                // Reset various ui items
+                self.list_view.all_selected = false;
             }
             Err(e) => {
                 println!("{}", e);
@@ -112,12 +133,23 @@ impl KekwFM {
         match read_directory_listing(&self.observer.path, &self.read_dir_options) {
             Ok(result) => {
                 self.directory_listing = result;
+                // Reset various ui items
+                self.list_view.all_selected = false;
             }
             Err(e) => {
                 println!("{}", e);
                 self.input_error = Some(e.to_string());
             }
         }
+    }
+
+    fn top_panel(&mut self, ctx: &egui::Context) {
+        self.top_panel
+            .show(ctx, &self.textures, &mut self.read_dir_options);
+    }
+
+    fn left_panel(&mut self, ctx: &egui::Context) {
+        self.left_panel.show(ctx, &self.textures);
     }
 }
 
@@ -132,19 +164,27 @@ impl eframe::App for KekwFM {
                 KekEvent::Print(text) => println!("Eeventti: {}", text),
                 KekEvent::Navigate(path) => self.try_navigate(&path),
                 KekEvent::NavigateParent => self.try_navigate_parent(),
+                KekEvent::NavigateBack => self.try_navigate_back(),
+                KekEvent::NavigateForward => self.try_navigate_forward(),
                 KekEvent::RefreshDirList => self.refresh_current_dir_listing(),
                 KekEvent::XdgOpenFile(path) => fileutils::xdg_open_file(&path),
+                KekEvent::ButtonPress(MouseButton::Back) => self.try_navigate_back(),
+                KekEvent::ButtonPress(MouseButton::Forward) => self.try_navigate_forward(),
                 _ => println!("Unimplemented event"),
             }
         }
 
-        self.top_panel
-            .show(ctx, &self.textures, &mut self.read_dir_options);
+        self.top_panel(ctx);
 
-        self.left_panel.show(ctx, &self.textures);
+        self.left_panel(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.list_view.show(ui, &self.directory_listing.items, &self.textures, &mut self.read_dir_options);
+            self.list_view.show(
+                ui,
+                &mut self.directory_listing.items,
+                &self.textures,
+                &mut self.read_dir_options,
+            );
         });
     }
 }

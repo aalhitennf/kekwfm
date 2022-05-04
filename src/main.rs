@@ -3,6 +3,7 @@
 mod app;
 pub mod components;
 pub mod eevertti;
+pub mod rdev_events;
 pub mod textures;
 
 use app::KekwFM;

@@ -68,11 +68,15 @@ impl TopPanel {
                 ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
                     ui.with_layout(Layout::left_to_right(), |ui| {
                         if create_button(ui, textures.arrow_left.id()).clicked() {
-                            send_event(KekEvent::NavigateParent);
+                            send_event(KekEvent::NavigateBack);
                         }
 
                         if create_button(ui, textures.arrow_right.id()).clicked() {
-                            send_event(KekEvent::Print(String::from("Unimplemented")));
+                            send_event(KekEvent::NavigateForward);
+                        }
+
+                        if create_button(ui, textures.arrow_up.id()).clicked() {
+                            send_event(KekEvent::NavigateParent);
                         }
 
                         path_input::build(

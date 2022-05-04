@@ -8,6 +8,7 @@ pub struct TextureLoader {
     pub settings: TextureHandle,
     pub arrow_left: TextureHandle,
     pub arrow_right: TextureHandle,
+    pub arrow_up: TextureHandle,
     pub home: TextureHandle,
     pub folder: TextureHandle,
     pub file: TextureHandle,
@@ -29,6 +30,10 @@ impl TextureLoader {
         let arrow_right = load_image_from_path(&format!("theme/{theme}/icons/arrow-right.png"))
             .map_or(ColorImage::example(), |image| image);
         let arrow_right = ctx.load_texture("arrow-right", arrow_right);
+
+        let arrow_up = load_image_from_path(&format!("theme/{theme}/icons/arrow-up.png"))
+            .map_or(ColorImage::example(), |image| image);
+        let arrow_up = ctx.load_texture("arrow-up", arrow_up);
 
         let home = load_image_from_path(&format!("theme/{theme}/icons/home.png"))
             .map_or(ColorImage::example(), |image| image);
@@ -54,6 +59,7 @@ impl TextureLoader {
             settings,
             arrow_left,
             arrow_right,
+            arrow_up,
             home,
             folder,
             file,
