@@ -10,7 +10,7 @@ use kekwlib::{
 };
 
 use crate::{
-    components::{LeftPanel, ListView, TopPanel},
+    components::{LeftPanel, ListView, StatusBar, TopPanel},
     eevertti::{set_eevertti, KekEvent, MouseButton},
     rdev_events,
     textures::TextureLoader,
@@ -28,6 +28,7 @@ pub struct KekwFM {
     pub left_panel: LeftPanel,
     pub top_panel: TopPanel,
     pub list_view: ListView,
+    pub status_bar: StatusBar,
     pub read_dir_options: ReadDirOptions,
     pub observer: FsObserver,
     pub event_receiver: Receiver<KekEvent>,
@@ -61,9 +62,11 @@ impl KekwFM {
         rdev_events::spawn_mouse_event_listener(cc.egui_ctx.clone());
 
         // UI Elements
-        let left_panel = LeftPanel::new();
-        let top_panel = TopPanel::new(&default_path);
+        let fill_color = cc.egui_ctx.style().visuals.window_fill();
+        let left_panel = LeftPanel::new(fill_color);
+        let top_panel = TopPanel::new(&default_path, fill_color);
         let list_view = ListView::default();
+        let status_bar = StatusBar::new(fill_color);
 
         Self {
             dirs,
@@ -74,6 +77,7 @@ impl KekwFM {
             left_panel,
             top_panel,
             list_view,
+            status_bar,
             read_dir_options,
             observer,
             event_receiver: rx,
@@ -143,6 +147,32 @@ impl KekwFM {
         }
     }
 
+    fn select_all(&mut self) {
+        for item in self.directory_listing.items.iter_mut() {
+            item.selected = true;
+        }
+    }
+
+    fn deselect_all(&mut self) {
+        for item in self.directory_listing.items.iter_mut() {
+            item.selected = false;
+        }
+    }
+
+    // fn trash_selected(&mut self) {
+    //     let selected = self.directory_listing.items.iter().filter_map(|i| {
+    //         if i.selected {
+    //             Some(i.path.clone())
+    //         } else {
+    //             None
+    //         }
+    //     }).collect::<Vec<String>>();
+
+    //     fileutils::trash_many(&selected);
+    // }
+
+    // UI Elements
+
     fn top_panel(&mut self, ctx: &egui::Context) {
         self.top_panel
             .show(ctx, &self.textures, &mut self.read_dir_options);
@@ -150,6 +180,16 @@ impl KekwFM {
 
     fn left_panel(&mut self, ctx: &egui::Context) {
         self.left_panel.show(ctx, &self.textures);
+    }
+
+    fn status_bar(&mut self, ctx: &egui::Context) {
+        let selected = self
+            .directory_listing
+            .items
+            .iter()
+            .filter(|i| i.selected)
+            .count();
+        self.status_bar.show(ctx, selected, &self.directory_listing.metadata);
     }
 }
 
@@ -168,8 +208,12 @@ impl eframe::App for KekwFM {
                 KekEvent::NavigateForward => self.try_navigate_forward(),
                 KekEvent::RefreshDirList => self.refresh_current_dir_listing(),
                 KekEvent::XdgOpenFile(path) => fileutils::xdg_open_file(&path),
+                // KekEvent::TrashFile(path) => fileutils::trash_one(&path),
+                // KekEvent::TrashSelected => self.trash_selected(),
                 KekEvent::ButtonPress(MouseButton::Back) => self.try_navigate_back(),
                 KekEvent::ButtonPress(MouseButton::Forward) => self.try_navigate_forward(),
+                KekEvent::SelectAll => self.select_all(),
+                KekEvent::DeselectAll => self.deselect_all(),
                 _ => println!("Unimplemented event"),
             }
         }
@@ -177,6 +221,8 @@ impl eframe::App for KekwFM {
         self.top_panel(ctx);
 
         self.left_panel(ctx);
+
+        self.status_bar(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             self.list_view.show(
@@ -186,5 +232,7 @@ impl eframe::App for KekwFM {
                 &mut self.read_dir_options,
             );
         });
+
+        
     }
 }

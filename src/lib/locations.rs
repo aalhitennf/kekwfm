@@ -64,7 +64,7 @@ impl Default for Locations {
     fn default() -> Self {
         let dirs = directories::UserDirs::new().unwrap();
         let home = Location::new(dirs.home_dir().to_str().unwrap(), "Home", "home");
-        let fav = Location::new("/usr/lib", "/usr/lib", "koira");
+        let favourites = vec![Location::new("/usr/lib", "/usr/lib", "koira")];
         let devices = crate::diskinfo::disks()
             .iter()
             .map(Device::from)
@@ -72,7 +72,7 @@ impl Default for Locations {
 
         Locations {
             home,
-            favourites: vec![fav],
+            favourites,
             devices,
         }
     }

@@ -1,4 +1,4 @@
-use std::{fs::DirEntry, path::Path, result::Result};
+use std::{fs::DirEntry, path::Path, result::Result, fmt::Display};
 
 use crate::KekwResult;
 
@@ -79,11 +79,11 @@ pub struct DirectoryListing {
 
 #[derive(Debug)]
 pub struct DirectoryListingMetaData {
-    files: u64,
-    folders: u64,
-    symlinks: u64,
-    size_bytes: u64,
-    size_mib: f64,
+    pub files: u64,
+    pub folders: u64,
+    pub symlinks: u64,
+    pub size_bytes: u64,
+    pub size_mib: f64,
 }
 
 impl Default for DirectoryListingMetaData {
@@ -95,6 +95,16 @@ impl Default for DirectoryListingMetaData {
             size_bytes: 0,
             size_mib: 0.0,
         }
+    }
+}
+
+impl Display for DirectoryListingMetaData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let meta_text = format!(
+            "{} files {} folders ({} symlinks) {:.2} MiB ({} bytes)",
+            self.files, self.folders, self.symlinks, self.size_mib, self.size_bytes
+        );
+        write!(f, "{}", &meta_text)
     }
 }
 

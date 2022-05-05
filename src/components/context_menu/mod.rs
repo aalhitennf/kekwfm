@@ -24,17 +24,13 @@ pub fn file_right_click(ui: &mut egui::Ui, item: &DirectoryListingItem) {
                 ui.close_menu();
             };
 
-            if create_button(ui, "Delete").clicked() {
-                if item.is_file {
-                    send_event(KekEvent::DeleteFile(item.path.clone()));
-                } else {
-                    send_event(KekEvent::DeleteFolder(item.path.clone()));
-                }
+            if create_button(ui, "Trash").clicked() {
+                send_event(KekEvent::TrashFile(item.path.clone()));
                 ui.close_menu();
             }
 
-            if create_button(ui, "Delete all selected").clicked() {
-                send_event(KekEvent::DeleteSelected);
+            if create_button(ui, "Trash selected file(s)").clicked() {
+                send_event(KekEvent::TrashSelected);
                 ui.close_menu();
             }
 

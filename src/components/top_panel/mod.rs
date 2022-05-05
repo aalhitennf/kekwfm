@@ -1,6 +1,6 @@
 use eframe::{
     egui::{self, style::Margin, Align, Frame, ImageButton, Layout, Response, Vec2},
-    epaint::TextureId,
+    epaint::{TextureId, Color32},
 };
 use kekwlib::dirutils::{FileSorting, ReadDirOptions};
 
@@ -37,13 +37,20 @@ fn create_button(ui: &mut egui::Ui, texture_id: TextureId) -> Response {
 // #[derive(Default)]
 pub struct TopPanel {
     settings_visible: bool,
+    frame: Frame,
     pub input_value: String,
 }
 
 impl TopPanel {
-    pub fn new(input_value: &str) -> Self {
+    pub fn new(input_value: &str, fill: Color32) -> Self {
+        let frame = Frame {
+            inner_margin: Margin::same(MARGIN),
+            fill,
+            ..Frame::default()
+        };
         TopPanel {
             settings_visible: false,
+            frame,
             input_value: input_value.to_string(),
         }
     }
@@ -54,16 +61,11 @@ impl TopPanel {
         textures: &TextureLoader,
         read_dir_options: &mut ReadDirOptions,
     ) {
-        let frame = Frame {
-            inner_margin: Margin::same(MARGIN),
-            fill: ctx.style().visuals.window_fill(),
-            ..Frame::default()
-        };
 
         egui::TopBottomPanel::top("top_panel")
             .resizable(false)
             .max_height(PANEL_HEIGHT)
-            .frame(frame)
+            .frame(self.frame)
             .show(ctx, |ui| {
                 ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
                     ui.with_layout(Layout::left_to_right(), |ui| {

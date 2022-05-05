@@ -19,11 +19,13 @@ pub enum KekEvent {
     NavigateForward,
     RefreshDirList,
     XdgOpenFile(String),
-    DeleteFile(String),
-    DeleteFolder(String),
+    TrashFile(String),
+    TrashSelected,
     DeleteSelected,
     FavouriteFolder(DirectoryListingItem),
     ButtonPress(MouseButton),
+    SelectAll,
+    DeselectAll,
 }
 
 pub fn send_event(event: KekEvent) {

@@ -16,7 +16,6 @@ impl History {
 
     pub fn add(&mut self, path: &str) {
         if path != self.current {
-
             self.back_stack.push(self.current.clone());
             self.current = path.to_string();
         }

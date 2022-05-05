@@ -58,8 +58,10 @@ impl ListView {
                         .add(egui::Checkbox::new(&mut self.all_selected, ""))
                         .changed()
                     {
-                        for item in items.iter_mut() {
-                            item.selected = self.all_selected;
+                        if self.all_selected {
+                            send_event(KekEvent::SelectAll);
+                        } else {
+                            send_event(KekEvent::DeselectAll);
                         }
                     }
 
@@ -97,20 +99,21 @@ impl ListView {
             })
             .body(|body| {
                 body.rows(text_height, items.len(), |index, mut row| {
-                    if let Some(mut i) = items.get_mut(index) {
-                        let icon = if i.is_dir {
+                    if let Some(mut item) = items.get_mut(index) {
+                        let icon = if item.is_dir {
                             textures.folder.id()
                         } else {
                             textures.file.id()
                         };
+
+                        row.col(|ui| row_file_item(ui, &mut item, icon));
+
                         row.col(|ui| {
-                            row_file_item(ui, &mut i, icon);
+                            ui.label(&item.extension);
                         });
+
                         row.col(|ui| {
-                            ui.label(&i.extension);
-                        });
-                        row.col(|ui| {
-                            ui.label(bytes_to_human_readable(i.size_bytes));
+                            ui.label(bytes_to_human_readable(item.size_bytes));
                         });
                     }
                 });
@@ -125,20 +128,26 @@ fn row_file_item(ui: &mut egui::Ui, item: &mut DirectoryListingItem, icon: Textu
         ui.with_layout(Layout::left_to_right().with_main_justify(true), |ui| {
             ui.add(Button::image_and_text(icon, ICON_SIZE, &item.filename).frame(false))
                 .context_menu(|ui| file_right_click(ui, item))
-        })
+        }).inner
     });
 
-    if ui.input().modifiers.shift || ui.input().modifiers.ctrl {
-        if r.inner.inner.clicked_by(PointerButton::Primary) {
+    if r.inner.clicked_by(PointerButton::Primary) {
+        if ui.input().modifiers.shift || ui.input().modifiers.ctrl {
             item.selected = !item.selected;
-        }
-    } else {
-        if r.inner.inner.double_clicked_by(PointerButton::Primary) {
-            if item.is_dir {
-                send_event(KekEvent::Navigate(item.path.clone()));
-            } else if item.is_file {
-                send_event(KekEvent::XdgOpenFile(item.path.clone()));
-            }
+        } 
+        // NOT work
+        // else {
+        //     send_event(KekEvent::DeselectAll);
+        //     item.selected = !item.selected;
+        //     println!("normal click {}", item.selected);
+        // }
+    }
+
+    if r.inner.double_clicked_by(PointerButton::Primary) {
+        if item.is_dir {
+            send_event(KekEvent::Navigate(item.path.clone()));
+        } else if item.is_file {
+            send_event(KekEvent::XdgOpenFile(item.path.clone()));
         }
     }
 }

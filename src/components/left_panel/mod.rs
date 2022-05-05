@@ -1,7 +1,7 @@
 use eframe::{
     egui::{self, style::Margin, Button, Frame, Response, Sense, Ui},
     emath::Vec2,
-    epaint::TextureId,
+    epaint::{TextureId, Color32},
 };
 use kekwlib::locations::Locations;
 
@@ -11,7 +11,7 @@ use crate::{
 };
 
 const ICON_SIZE: Vec2 = egui::vec2(18.0, 18.0);
-const ITEM_SIZE: [f32; 2] = [150.0, 20.0];
+const ITEM_SIZE: [f32; 2] = [130.0, 20.0];
 
 const LIST_SPACING_LABEL: f32 = 5.0;
 const LIST_SPACING_SECTION: f32 = 15.0;
@@ -24,26 +24,27 @@ fn create_location_item(ui: &mut Ui, text: &str, texture: TextureId) -> Response
     ui.add_sized(ITEM_SIZE, button)
 }
 
-#[derive(Default)]
 pub struct LeftPanel {
     locations: Locations,
+    frame: Frame,
 }
 
 impl LeftPanel {
-    pub fn new() -> Self {
+    pub fn new(fill: Color32) -> Self {
         let locations = Locations::default();
-        LeftPanel { locations }
+        let frame = Frame {
+            inner_margin: Margin::symmetric(10.0, 5.0),
+            fill,
+            ..Frame::default()
+        };
+        LeftPanel { locations, frame }
     }
 
     pub fn show(&mut self, ctx: &egui::Context, textures: &TextureLoader) {
-        let frame = Frame {
-            inner_margin: Margin::symmetric(10.0, 5.0),
-            fill: ctx.style().visuals.window_fill(),
-            ..Frame::default()
-        };
+
 
         egui::SidePanel::left("left_panel")
-            .frame(frame)
+            .frame(self.frame)
             .resizable(true)
             .show(ctx, |ui| {
                 ui.label("Locations");
