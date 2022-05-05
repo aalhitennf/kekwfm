@@ -10,24 +10,31 @@ use kekwlib::{
 };
 
 use crate::{
-    components::{LeftPanel, ListView, StatusBar, TopPanel},
+    components::{LeftPanel, ListView, StatusBar, TopPanel, grid_view::GridView, DirectoryView},
     eevertti::{set_eevertti, KekEvent, MouseButton},
     rdev_events,
-    textures::TextureLoader,
+    textures::Textures,
 };
 
 use eframe::egui;
+
+// enum View {
+//     GridView(GridView),
+//     ListView(ListView),
+// }
 
 pub struct KekwFM {
     pub dirs: UserDirs,
     history: History,
     pub input_error: Option<String>,
     pub directory_listing: DirectoryListing,
-    pub textures: TextureLoader,
+    pub textures: Textures,
+    // pub textures_large: TexturesLarge
     // UI elements
     pub left_panel: LeftPanel,
     pub top_panel: TopPanel,
     pub list_view: ListView,
+    pub grid_view: GridView,
     pub status_bar: StatusBar,
     pub read_dir_options: ReadDirOptions,
     pub observer: FsObserver,
@@ -39,7 +46,8 @@ impl KekwFM {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
         cc.egui_ctx.set_pixels_per_point(1.2);
 
-        let textures = TextureLoader::new("feather", &cc.egui_ctx);
+        let textures = Textures::new("feather", &cc.egui_ctx);
+        // let textures_large = TexturesLarge::new("feather", &cc.egui_ctx);
 
         let dirs = directories::UserDirs::new().unwrap();
 
@@ -67,6 +75,7 @@ impl KekwFM {
         let top_panel = TopPanel::new(&default_path, fill_color);
         let list_view = ListView::default();
         let status_bar = StatusBar::new(fill_color);
+        let grid_view = GridView::default();
 
         Self {
             dirs,
@@ -74,9 +83,11 @@ impl KekwFM {
             input_error: None,
             directory_listing,
             textures,
+            // textures_large,
             left_panel,
             top_panel,
             list_view,
+            grid_view,
             status_bar,
             read_dir_options,
             observer,
@@ -225,12 +236,13 @@ impl eframe::App for KekwFM {
         self.status_bar(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.list_view.show(
-                ui,
-                &mut self.directory_listing.items,
-                &self.textures,
-                &mut self.read_dir_options,
-            );
+            self.grid_view.show(ui, &self.directory_listing.items, &self.textures, &mut self.read_dir_options);
+            // self.list_view.show(
+            //     ui,
+            //     &mut self.directory_listing.items,
+            //     &self.textures,
+            //     &mut self.read_dir_options,
+            // );
         });
 
         

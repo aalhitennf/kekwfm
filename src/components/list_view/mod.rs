@@ -5,12 +5,12 @@ use eframe::{
 };
 use egui_extras::{Size, TableBuilder};
 
-use kekwlib::dirutils::{DirectoryListing, DirectoryListingItem, FileSorting, ReadDirOptions};
+use kekwlib::dirutils::{DirectoryListingItem, FileSorting, ReadDirOptions};
 
 use crate::{
     components::context_menu::file_right_click,
     eevertti::{send_event, KekEvent},
-    textures::TextureLoader,
+    textures::Textures,
 };
 
 const HEADER_SIZE: f32 = 20.0;
@@ -18,16 +18,6 @@ const ICON_SIZE: Vec2 = Vec2 { x: 18.0, y: 18.0 };
 
 fn clickable_label(text: &str) -> egui::Label {
     egui::Label::new(text).sense(Sense::click()).wrap(false)
-}
-
-pub trait DirectoryView {
-    fn show(
-        &mut self,
-        ui: &mut egui::Ui,
-        read_dir_options: &mut ReadDirOptions,
-        textures: &TextureLoader,
-        items: &DirectoryListing,
-    );
 }
 
 #[derive(Default)]
@@ -40,7 +30,7 @@ impl ListView {
         &mut self,
         ui: &mut egui::Ui,
         items: &mut [DirectoryListingItem],
-        textures: &TextureLoader,
+        textures: &Textures,
         read_dir_options: &mut ReadDirOptions,
     ) {
         let text_height = TextStyle::Body.resolve(ui.style()).size + 10.0;

@@ -6,7 +6,7 @@ use kekwlib::dirutils::{FileSorting, ReadDirOptions};
 
 use crate::{
     eevertti::{send_event, KekEvent},
-    textures::TextureLoader,
+    textures::Textures,
 };
 
 mod path_input;
@@ -58,7 +58,7 @@ impl TopPanel {
     pub fn show(
         &mut self,
         ctx: &egui::Context,
-        textures: &TextureLoader,
+        textures: &Textures,
         read_dir_options: &mut ReadDirOptions,
     ) {
 

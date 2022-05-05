@@ -7,7 +7,7 @@ use kekwlib::locations::Locations;
 
 use crate::{
     eevertti::{send_event, KekEvent},
-    textures::TextureLoader,
+    textures::Textures,
 };
 
 const ICON_SIZE: Vec2 = egui::vec2(18.0, 18.0);
@@ -40,9 +40,7 @@ impl LeftPanel {
         LeftPanel { locations, frame }
     }
 
-    pub fn show(&mut self, ctx: &egui::Context, textures: &TextureLoader) {
-
-
+    pub fn show(&mut self, ctx: &egui::Context, textures: &Textures) {
         egui::SidePanel::left("left_panel")
             .frame(self.frame)
             .resizable(true)

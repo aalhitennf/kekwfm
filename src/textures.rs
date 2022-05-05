@@ -3,8 +3,9 @@ use eframe::{
     epaint::{ColorImage, TextureHandle},
 };
 
-#[derive(Clone)]
-pub struct TextureLoader {
+// #[derive(Clone)]
+pub struct Textures {
+    // Smol
     pub settings: TextureHandle,
     pub arrow_left: TextureHandle,
     pub arrow_right: TextureHandle,
@@ -14,9 +15,12 @@ pub struct TextureLoader {
     pub file: TextureHandle,
     pub star: TextureHandle,
     pub hard_drive: TextureHandle,
+    // Large
+    pub folder_64: TextureHandle,
+    pub file_64: TextureHandle,
 }
 
-impl TextureLoader {
+impl Textures {
     pub fn new(theme: &str, ctx: &egui::Context) -> Self {
         // TODO This can be done better i thnk
         let settings = load_image_from_path(&format!("theme/{theme}/icons/settings.png"))
@@ -55,7 +59,16 @@ impl TextureLoader {
             .map_or(ColorImage::example(), |image| image);
         let hard_drive = ctx.load_texture("hard-drive-icon", hard_drive);
 
-        TextureLoader {
+        let folder_64 = load_image_from_path(&format!("theme/{theme}/icons/folder_64.png"))
+            .map_or(ColorImage::example(), |image| image);
+        let folder_64 = ctx.load_texture("folder-icon_64", folder_64);
+
+        let file_64 = load_image_from_path(&format!("theme/{theme}/icons/file_64.png"))
+            .map_or(ColorImage::example(), |image| image);
+        let file_64 = ctx.load_texture("file-icon_64", file_64);
+
+
+        Textures {
             settings,
             arrow_left,
             arrow_right,
@@ -65,9 +78,33 @@ impl TextureLoader {
             file,
             star,
             hard_drive,
+            folder_64,
+            file_64,
         }
     }
 }
+
+// pub struct TexturesLarge {
+//     pub folder_64: TextureHandle,
+//     pub file_64: TextureHandle,
+// }
+
+// impl TexturesLarge {
+//     pub fn new(theme: &str, ctx: &egui::Context) -> Self {
+//         let folder_64 = load_image_from_path(&format!("theme/{theme}/icons/folder_64.png"))
+//             .map_or(ColorImage::example(), |image| image);
+//         let folder_64 = ctx.load_texture("folder-icon_64", folder_64);
+
+//         let file_64 = load_image_from_path(&format!("theme/{theme}/icons/file_64.png"))
+//             .map_or(ColorImage::example(), |image| image);
+//         let file_64 = ctx.load_texture("file-icon_64", file_64);
+
+//         TexturesLarge {
+//             folder_64,
+//             file_64,
+//         }
+//     }
+// }
 
 pub fn load_image_from_path(path: &str) -> Result<egui::ColorImage, image::ImageError> {
     let path = std::path::Path::new(path);
