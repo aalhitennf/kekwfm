@@ -1,13 +1,13 @@
 pub mod context_menu;
 
-pub mod grid_view;
+mod grid_view;
 mod left_panel;
 mod list_view;
 mod statusbar;
 mod top_panel;
 
 use kekwlib::dirutils::{DirectoryListingItem, ReadDirOptions};
-// pub use grid_view;
+pub use grid_view::GridView;
 pub use left_panel::LeftPanel;
 pub use list_view::ListView;
 pub use statusbar::StatusBar;

@@ -69,7 +69,7 @@ impl LeftPanel {
                 ui.label("Devices");
                 ui.add_space(LIST_SPACING_LABEL);
 
-                for dev in self.locations.devices.iter() {
+                for dev in &self.locations.devices {
                     if create_location_item(ui, &dev.info.device_name, textures.hard_drive.id())
                         .clicked()
                     {

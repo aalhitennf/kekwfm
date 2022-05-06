@@ -4,11 +4,11 @@ use once_cell::sync::OnceCell;
 
 static EEVERTTI: OnceCell<Sender<KekEvent>> = OnceCell::new();
 
-#[derive(Debug)]
-pub enum MouseButton {
-    Back,
-    Forward,
-}
+// #[derive(Debug)]
+// pub enum MouseButton {
+//     Back,
+//     Forward,
+// }
 
 #[derive(Debug)]
 pub enum KekEvent {
@@ -23,7 +23,7 @@ pub enum KekEvent {
     TrashSelected,
     DeleteSelected,
     FavouriteFolder(DirectoryListingItem),
-    ButtonPress(MouseButton),
+    // ButtonPress(MouseButton),
     SelectAll,
     DeselectAll,
 }

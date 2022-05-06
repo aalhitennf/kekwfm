@@ -89,14 +89,14 @@ impl ListView {
             })
             .body(|body| {
                 body.rows(text_height, items.len(), |index, mut row| {
-                    if let Some(mut item) = items.get_mut(index) {
+                    if let Some(item) = items.get_mut(index) {
                         let icon = if item.is_dir {
                             textures.folder.id()
                         } else {
                             textures.file.id()
                         };
 
-                        row.col(|ui| row_file_item(ui, &mut item, icon));
+                        row.col(|ui| row_file_item(ui, item, icon));
 
                         row.col(|ui| {
                             ui.label(&item.extension);

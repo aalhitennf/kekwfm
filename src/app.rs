@@ -10,8 +10,8 @@ use kekwlib::{
 };
 
 use crate::{
-    components::{LeftPanel, ListView, StatusBar, TopPanel, grid_view::GridView, DirectoryView},
-    eevertti::{set_eevertti, KekEvent, MouseButton},
+    components::{LeftPanel, ListView, StatusBar, TopPanel, GridView},
+    eevertti::{set_eevertti, KekEvent},
     rdev_events,
     textures::Textures,
 };
@@ -170,17 +170,17 @@ impl KekwFM {
         }
     }
 
-    // fn trash_selected(&mut self) {
-    //     let selected = self.directory_listing.items.iter().filter_map(|i| {
-    //         if i.selected {
-    //             Some(i.path.clone())
-    //         } else {
-    //             None
-    //         }
-    //     }).collect::<Vec<String>>();
+    fn trash_selected(&mut self) {
+        let selected = self.directory_listing.items.iter().filter_map(|i| {
+            if i.selected {
+                Some(i.path.clone())
+            } else {
+                None
+            }
+        }).collect::<Vec<String>>();
 
-    //     fileutils::trash_many(&selected);
-    // }
+        fileutils::trash_many(&selected);
+    }
 
     // UI Elements
 
@@ -219,10 +219,10 @@ impl eframe::App for KekwFM {
                 KekEvent::NavigateForward => self.try_navigate_forward(),
                 KekEvent::RefreshDirList => self.refresh_current_dir_listing(),
                 KekEvent::XdgOpenFile(path) => fileutils::xdg_open_file(&path),
-                // KekEvent::TrashFile(path) => fileutils::trash_one(&path),
-                // KekEvent::TrashSelected => self.trash_selected(),
-                KekEvent::ButtonPress(MouseButton::Back) => self.try_navigate_back(),
-                KekEvent::ButtonPress(MouseButton::Forward) => self.try_navigate_forward(),
+                KekEvent::TrashFile(path) => fileutils::trash_one(&path),
+                KekEvent::TrashSelected => self.trash_selected(),
+                // KekEvent::ButtonPress(MouseButton::Back) => self.try_navigate_back(),
+                // KekEvent::ButtonPress(MouseButton::Forward) => self.try_navigate_forward(),
                 KekEvent::SelectAll => self.select_all(),
                 KekEvent::DeselectAll => self.deselect_all(),
                 _ => println!("Unimplemented event"),
@@ -236,13 +236,13 @@ impl eframe::App for KekwFM {
         self.status_bar(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.grid_view.show(ui, &self.directory_listing.items, &self.textures, &mut self.read_dir_options);
-            // self.list_view.show(
-            //     ui,
-            //     &mut self.directory_listing.items,
-            //     &self.textures,
-            //     &mut self.read_dir_options,
-            // );
+            // self.grid_view.show(ui, &self.directory_listing.items, &self.textures, &mut self.read_dir_options);
+            self.list_view.show(
+                ui,
+                &mut self.directory_listing.items,
+                &self.textures,
+                &mut self.read_dir_options,
+            );
         });
 
         

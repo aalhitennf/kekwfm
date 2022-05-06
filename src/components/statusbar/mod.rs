@@ -21,7 +21,7 @@ impl StatusBar {
             max_rows: 1,
             ..TextWrapping::default()
         };
-
+        // TODO calculate widths
         TopBottomPanel::bottom("status_bar")
             .resizable(false)
             .max_height(40.0)

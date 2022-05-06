@@ -28,7 +28,7 @@ impl GridView {
         textures: &Textures,
         _read_dir_options: &mut ReadDirOptions,
     ) {
-        let n_column_amount =  std::cmp::max(1, (((ui.available_width() / MIN_WIDTH)).round() - 1.0) as usize);
+        let n_column_amount =  std::cmp::max(1, ((ui.available_width() / MIN_WIDTH).round() - 1.0) as usize);
         let column_amount = std::cmp::min(n_column_amount, items.len());
 
         let total_rows = items.len() / column_amount + 1;
@@ -43,7 +43,7 @@ impl GridView {
                         if let Some(item) = items.get((index * column_amount) + i) {
                             let icon = if item.is_dir { &textures.folder_64 } else { &textures.file_64 };
                             row.col(|ui| {
-                                row_file_item(ui, &item, icon.id());
+                                row_file_item(ui, item, icon.id());
                             });
                         }
                     }
